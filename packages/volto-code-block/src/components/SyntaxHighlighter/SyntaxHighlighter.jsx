@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Prism from 'prismjs';
 import config from '@plone/volto/registry';
 
@@ -11,25 +11,56 @@ import 'prismjs/plugins/line-numbers/prism-line-numbers';
 const SyntaxHighlighter = (props) => {
   const { language, code, showLineNumbers, lineNbr } = props;
   const preRef = useRef(null);
-  const hasHighlightedRef = useRef(false);
-  const className = cx(`language-${language}`, {
-    'line-numbers': showLineNumbers,
-  });
+  const [mounted, setMounted] = useState(false);
+
   const allLanguages = config.settings.codeBlock.languages;
 
+  // Mark component as mounted after first render (client-side only)
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    // Don't run on server or before first client render (avoid hydration mismatch)
+    if (!mounted) return;
+
     const preElement = preRef.current;
     if (!preElement) return;
 
-    Prism.languages[language] = allLanguages[language].language;
+    const codeElement = preElement.querySelector('code');
+    if (!codeElement) return;
 
-    // Function to perform highlighting
+    // Ensure language is loaded
+    if (language && allLanguages[language]) {
+      Prism.languages[language] = allLanguages[language].language;
+    }
+
+    // Function to perform highlighting on this specific element
     const performHighlight = () => {
-      const codeElement = preElement.querySelector('code');
-      if (codeElement) {
-        Prism.highlightElement(codeElement);
-        hasHighlightedRef.current = true;
+      // Remove any existing Prism classes and line numbers to reset state
+      codeElement.className = '';
+      codeElement.removeAttribute('class');
+
+      // Remove line-numbers-rows if it exists
+      const existingRows = preElement.querySelector('.line-numbers-rows');
+      if (existingRows) {
+        existingRows.remove();
       }
+
+      // Set the code content
+      codeElement.textContent = code;
+
+      // Apply the correct classes to pre element
+      const preClassName = cx(`language-${language}`, {
+        'line-numbers': showLineNumbers,
+      });
+      preElement.className = preClassName;
+
+      // Apply the correct class to code element before highlighting
+      codeElement.className = `language-${language}`;
+
+      // Highlight this specific element
+      Prism.highlightElement(codeElement);
     };
 
     // Check if element is visible (not display: none)
@@ -46,7 +77,7 @@ const SyntaxHighlighter = (props) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          // When element becomes visible and has non-zero dimensions
+          // When element becomes visible
           if (entry.isIntersecting && entry.intersectionRatio > 0) {
             // Re-highlight to fix line numbers
             performHighlight();
@@ -60,11 +91,11 @@ const SyntaxHighlighter = (props) => {
 
     observer.observe(preElement);
 
-    // Also watch for resize events (e.g., accordion opening)
+    // Also watch for resize events (e.g., accordion opening with CSS transitions)
     const resizeObserver = new ResizeObserver(() => {
       if (isVisible() && showLineNumbers) {
-        // Small delay to ensure layout is stable
-        setTimeout(performHighlight, 0);
+        // Small delay to ensure layout is stable after accordion animation
+        setTimeout(performHighlight, 50);
       }
     });
 
@@ -74,11 +105,16 @@ const SyntaxHighlighter = (props) => {
       observer.disconnect();
       resizeObserver.disconnect();
     };
-  }, [allLanguages, language, showLineNumbers]);
+  }, [allLanguages, language, showLineNumbers, code, mounted]);
 
   return (
-    <pre ref={preRef} className={className} data-start={lineNbr}>
-      <code data-prismjs-copy-timeout="300">{code}</code>
+    <pre
+      ref={preRef}
+      data-start={lineNbr}
+    >
+      <code data-prismjs-copy-timeout="300">
+        {code}
+      </code>
     </pre>
   );
 };
