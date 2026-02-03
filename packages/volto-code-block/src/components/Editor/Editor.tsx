@@ -90,6 +90,10 @@ pre:has(+ .${className}) .token.important {
 pre:has(+ .${className}) .token.italic {
   font-style: normal !important;
 }
+pre:has(+ .${className}) .token.title {
+  font-size: inherit !important;
+  text-transform: none !important;
+}
 /**
  * Hack to apply on some CSS on IE10 and IE11
  */
