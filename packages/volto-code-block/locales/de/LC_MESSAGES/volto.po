@@ -21,6 +21,16 @@ msgstr "Beschriftung"
 msgid "Code Block"
 msgstr ""
 
+#. Default: "Copied!"
+#: components/SyntaxHighlighter/SyntaxHighlighter
+msgid "Copied!"
+msgstr "Kopiert!"
+
+#. Default: "Copy"
+#: components/SyntaxHighlighter/SyntaxHighlighter
+msgid "Copy"
+msgstr "Kopieren"
+
 #. Default: "Dark"
 #: components/SyntaxHighlighter/Styles
 msgid "Dark"
