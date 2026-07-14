@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useIntl, defineMessages } from 'react-intl';
 import Prism from 'prismjs';
 import config from '@plone/volto/registry';
 
@@ -8,11 +9,23 @@ import 'prismjs/plugins/toolbar/prism-toolbar';
 import 'prismjs/plugins/copy-to-clipboard/prism-copy-to-clipboard';
 import 'prismjs/plugins/line-numbers/prism-line-numbers';
 
+const messages = defineMessages({
+  copy: {
+    id: 'Copy',
+    defaultMessage: 'Copy',
+  },
+  copied: {
+    id: 'Copied!',
+    defaultMessage: 'Copied!',
+  }
+});
+
 const SyntaxHighlighter = (props) => {
   const { language, code, showLineNumbers, lineNbr } = props;
   const preRef = useRef(null);
   const [mounted, setMounted] = useState(false);
 
+  const intl = useIntl();
   const allLanguages = config.settings.codeBlock.languages;
 
   // Mark component as mounted after first render (client-side only)
@@ -112,7 +125,11 @@ const SyntaxHighlighter = (props) => {
       ref={preRef}
       data-start={lineNbr}
     >
-      <code data-prismjs-copy-timeout="300">
+      <code
+        data-prismjs-copy={intl.formatMessage(messages.copy)}
+        data-prismjs-copy-success={intl.formatMessage(messages.copied)}
+        data-prismjs-copy-timeout="300"
+      >
         {code}
       </code>
     </pre>
